@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [scanType, setScanType] = useState("recon");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -49,20 +50,50 @@ const Dashboard = () => {
     }
   };
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!target) {
       toast.error("Please enter a target!");
       return;
     }
     
-    // Here you would typically make an API call to start the scan
-    const command = scanType === "recon" 
-      ? `./reconftw.sh -d ${target} -r`
-      : `./reconftw.sh -d ${target} -a`;
-    
-    console.log("Executing command:", command);
-    toast.success("Scan started successfully!");
+    try {
+      setIsScanning(true);
+      
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Call the Edge Function
+      const response = await fetch(
+        'https://etidgalrxeujyuatrfvc.supabase.co/functions/v1/start-scan',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ target, scanType })
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start scan');
+      }
+
+      toast.success("Scan started successfully!");
+      console.log("Scan response:", data);
+      
+    } catch (error) {
+      console.error("Error starting scan:", error);
+      toast.error(error.message || "Failed to start scan. Please try again.");
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   return (
@@ -142,8 +173,8 @@ const Dashboard = () => {
                   </RadioGroup>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Start Scan
+                <Button type="submit" className="w-full" disabled={isScanning}>
+                  {isScanning ? "Starting Scan..." : "Start Scan"}
                 </Button>
               </form>
             </CardContent>
