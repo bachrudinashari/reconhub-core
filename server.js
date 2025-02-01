@@ -5,9 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
+// Configure paths
+const RECONFTW_PATH = '/root/reconftw/reconftw.sh';
+const RECON_OUTPUT_PATH = '/root/reconftw/Recon';
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static('dist')); // Serve the built frontend
+app.use(express.static('dist'));
 
 // In-memory storage for scan results (replace with database in production)
 const scanResults = [];
@@ -22,12 +26,12 @@ app.post('/scan', (req, res) => {
 
   const scanId = ++scanCounter;
   const timestamp = new Date().toISOString();
-  const outputDir = `./reconftw_output/${target}_${timestamp.replace(/[:.]/g, '-')}`;
+  const outputDir = path.join(RECON_OUTPUT_PATH, `${target}_${timestamp.replace(/[:.]/g, '-')}`);
 
   // Build the reconftw command
   const command = scanType === "recon" 
-    ? `./reconftw.sh -d ${target} -r`
-    : `./reconftw.sh -d ${target} -a`;
+    ? `${RECONFTW_PATH} -d ${target} -r`
+    : `${RECONFTW_PATH} -d ${target} -a`;
 
   // Add scan to results
   scanResults.push({

@@ -4,6 +4,7 @@
 - Node.js and npm (already installed)
 - Nginx
 - PM2 (for process management)
+- ReconFTW installed in /root/reconftw
 
 ## Deployment Steps
 
@@ -16,8 +17,9 @@ sudo npm install -g pm2
 
 2. Clone your repository and install dependencies:
 ```bash
-git clone <your-repo-url>
-cd <repo-directory>
+cd /root
+git clone <your-repo-url> reconhub-core
+cd reconhub-core
 npm install
 ```
 
@@ -39,7 +41,7 @@ server {
     server_name your-domain.com;  # Replace with your domain or IP
 
     location / {
-        root /path/to/your/dist;  # Replace with actual path to your built frontend
+        root /root/reconhub-core/dist;  # Path to your built frontend
         index index.html;
         try_files $uri $uri/ /index.html;
     }
@@ -62,21 +64,31 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-6. Start the Node.js server with PM2:
+6. Configure paths in server.js:
+Update the reconftw paths in your server.js to point to the correct locations:
+```javascript
+const RECONFTW_PATH = '/root/reconftw/reconftw.sh';
+const RECON_OUTPUT_PATH = '/root/reconftw/Recon';
+```
+
+7. Start the Node.js server with PM2:
 ```bash
+cd /root/reconhub-core
 pm2 start server.js
 pm2 save
 pm2 startup
 ```
 
-7. Set up permissions for reconftw:
+8. Set up permissions:
 ```bash
-# Assuming reconftw is in the same directory as your application
-chmod +x reconftw.sh
-sudo chown -R $USER:$USER reconftw_output
+# Give necessary permissions to reconftw
+sudo chmod +x /root/reconftw/reconftw.sh
+# Ensure Node.js can access the Recon output directory
+sudo chown -R $USER:$USER /root/reconftw/Recon
+sudo chmod -R 755 /root/reconftw/Recon
 ```
 
-8. Configure firewall (if enabled):
+9. Configure firewall (if enabled):
 ```bash
 sudo ufw allow 80
 sudo ufw allow 443  # If using HTTPS
@@ -92,15 +104,8 @@ sudo certbot --nginx -d your-domain.com
 
 2. Configure proper file permissions:
 ```bash
-sudo chown -R $USER:$USER /path/to/your/app
-chmod -R 755 /path/to/your/app
-```
-
-3. Set up environment variables if needed:
-```bash
-nano ~/.bashrc
-# Add your environment variables
-export NODE_ENV=production
+sudo chown -R $USER:$USER /root/reconhub-core
+chmod -R 755 /root/reconhub-core
 ```
 
 ## Monitoring and Maintenance
@@ -121,3 +126,17 @@ sudo tail -f /var/log/nginx/error.log
 pm2 restart all
 sudo systemctl restart nginx
 ```
+
+## Troubleshooting
+
+If you encounter permission issues:
+1. Make sure the Node.js process has access to both:
+   - /root/reconftw/reconftw.sh
+   - /root/reconftw/Recon
+2. Check the PM2 logs for any path-related errors
+3. Verify that the Nginx user has access to the dist directory
+
+For scan result access issues:
+1. Ensure the Recon directory exists at /root/reconftw/Recon
+2. Check that file permissions are set correctly
+3. Verify that the Node.js process can read/write to the Recon directory
