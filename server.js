@@ -7,6 +7,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('dist')); // Serve the built frontend
 
 // In-memory storage for scan results (replace with database in production)
 const scanResults = [];
@@ -21,7 +22,7 @@ app.post('/scan', (req, res) => {
 
   const scanId = ++scanCounter;
   const timestamp = new Date().toISOString();
-  const outputDir = `./reconftw_output/${target}`;
+  const outputDir = `./reconftw_output/${target}_${timestamp.replace(/[:.]/g, '-')}`;
 
   // Build the reconftw command
   const command = scanType === "recon" 
@@ -35,7 +36,8 @@ app.post('/scan', (req, res) => {
     scanType,
     timestamp,
     status: 'running',
-    folderSize: '0 KB'
+    folderSize: '0 KB',
+    outputDir
   });
 
   // Execute the command
@@ -70,7 +72,29 @@ app.post('/scan', (req, res) => {
 });
 
 app.get('/scans', (req, res) => {
-  res.json(scanResults);
+  // Sort scans by timestamp in descending order (newest first)
+  const sortedScans = [...scanResults].sort((a, b) => 
+    new Date(b.timestamp) - new Date(a.timestamp)
+  );
+  res.json(sortedScans);
+});
+
+// Serve scan results images
+app.get('/results/:scanId/images/*', (req, res) => {
+  const scanId = parseInt(req.params.scanId);
+  const scan = scanResults.find(s => s.id === scanId);
+  
+  if (!scan) {
+    return res.status(404).json({ error: 'Scan not found' });
+  }
+
+  const imagePath = path.join(scan.outputDir, req.params[0]);
+  
+  if (!fs.existsSync(imagePath)) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+
+  res.sendFile(imagePath);
 });
 
 // Helper functions
