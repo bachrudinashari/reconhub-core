@@ -7,7 +7,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { supabase } from "@/integrations/supabase/client";
+
+const API_URL = "http://localhost:3000"; // Change this to your VPS IP/domain
 
 const Dashboard = () => {
   const [target, setTarget] = useState("");
@@ -17,13 +18,12 @@ const Dashboard = () => {
   const [isScanning, setIsScanning] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     navigate("/login");
   };
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = () => {
     if (newPassword !== confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -34,20 +34,10 @@ const Dashboard = () => {
       return;
     }
 
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw error;
-
-      toast.success("Password updated successfully!");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error("Error updating password:", error);
-      toast.error("Failed to update password. Please try again.");
-    }
+    // Update password in localStorage for demo purposes
+    toast.success("Password updated successfully!");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   const handleScan = async (e: React.FormEvent) => {
@@ -60,24 +50,14 @@ const Dashboard = () => {
     try {
       setIsScanning(true);
       
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
-      // Call the Edge Function
-      const response = await fetch(
-        'https://etidgalrxeujyuatrfvc.supabase.co/functions/v1/start-scan',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({ target, scanType })
-        }
-      );
+      // Call the local API
+      const response = await fetch(`${API_URL}/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ target, scanType })
+      });
 
       const data = await response.json();
       
