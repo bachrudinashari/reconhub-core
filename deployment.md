@@ -38,22 +38,37 @@ Add the following configuration:
 ```nginx
 server {
     listen 80;
-    server_name 38.242.149.132;  # Your VPS IP
+    server_name 38.242.149.132;
 
+    # Frontend static files
     location / {
-        root /root/reconhub-core/dist;  # Path to your built frontend
+        root /root/reconhub-core/dist;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
+    # Backend API proxy
     location /backend/ {
-        proxy_pass http://localhost:3000/;
+        proxy_pass http://localhost:3000/backend/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+        # Increase timeouts for long-running scans
+        proxy_read_timeout 3600;
+        proxy_connect_timeout 3600;
+        proxy_send_timeout 3600;
     }
+
+    # Enable CORS
+    add_header 'Access-Control-Allow-Origin' 'http://38.242.149.132' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+    add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
 }
 ```
 
@@ -94,20 +109,6 @@ sudo ufw allow 80
 sudo ufw allow 443  # If using HTTPS
 ```
 
-## Additional Security Considerations
-
-1. Set up SSL/HTTPS using Let's Encrypt:
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com
-```
-
-2. Configure proper file permissions:
-```bash
-sudo chown -R $USER:$USER /root/reconhub-core
-chmod -R 755 /root/reconhub-core
-```
-
 ## Monitoring and Maintenance
 
 - Monitor logs with PM2:
@@ -140,3 +141,9 @@ For scan result access issues:
 1. Ensure the Recon directory exists at /root/reconftw/Recon
 2. Check that file permissions are set correctly
 3. Verify that the Node.js process can read/write to the Recon directory
+
+For API access issues:
+1. Check Nginx error logs for any routing problems
+2. Verify that all API calls use the correct URL format: http://38.242.149.132/backend/
+3. Ensure CORS headers are properly set in both Nginx and server.js
+```

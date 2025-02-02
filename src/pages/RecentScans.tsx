@@ -21,7 +21,7 @@ interface ScanResult {
   folderSize: string;
 }
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://38.242.149.132/backend";
 
 const RecentScans = () => {
   const [scans, setScans] = useState<ScanResult[]>([]);

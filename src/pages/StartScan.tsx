@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://38.242.149.132/backend";
 
 const StartScan = () => {
   const [target, setTarget] = useState("");
@@ -42,42 +42,42 @@ const StartScan = () => {
     }
   };
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!target) {
-      toast.error("Please enter a target!");
-      return;
-    }
+const handleScan = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!target) {
+    toast.error("Please enter a target!");
+    return;
+  }
+  
+  try {
+    setIsScanning(true);
+    setScanStartTime(new Date());
+    setProgressData([]);
     
-    try {
-      setIsScanning(true);
-      setScanStartTime(new Date());
-      setProgressData([]);
-      
-      const response = await fetch(`${API_URL}/scan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ target, scanType })
-      });
+    const response = await fetch(`${API_URL}/scan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ target, scanType })
+    });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start scan');
-      }
-
-      updateProgress(data.output);
-      toast.success("Scan started successfully!");
-      
-    } catch (error) {
-      console.error("Error starting scan:", error);
-      toast.error(error.message || "Failed to start scan. Please try again.");
-    } finally {
-      setIsScanning(false);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to start scan');
     }
-  };
+
+    updateProgress(data.output);
+    toast.success("Scan started successfully!");
+    
+  } catch (error) {
+    console.error("Error starting scan:", error);
+    toast.error(error.message || "Failed to start scan. Please try again.");
+  } finally {
+    setIsScanning(false);
+  }
+};
 
   return (
     <div className="p-8">

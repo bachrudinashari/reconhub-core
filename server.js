@@ -9,7 +9,13 @@ const app = express();
 const RECONFTW_PATH = '/root/reconftw/reconftw.sh';
 const RECON_OUTPUT_PATH = '/root/reconftw/Recon';
 
-app.use(cors());
+// Configure CORS to allow requests from your VPS IP
+app.use(cors({
+  origin: 'http://38.242.149.132',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 app.use(express.static('dist'));
 
@@ -48,6 +54,7 @@ const runCommandInBackground = (command, scanId) => {
   });
 };
 
+// Update route paths to include /backend prefix
 app.post('/backend/scan', (req, res) => {
   const { target, scanType } = req.body;
   
@@ -86,14 +93,12 @@ app.post('/backend/scan', (req, res) => {
 });
 
 app.get('/backend/scans', (req, res) => {
-  // Sort scans by timestamp in descending order (newest first)
   const sortedScans = [...scanResults].sort((a, b) => 
     new Date(b.timestamp) - new Date(a.timestamp)
   );
   res.json(sortedScans);
 });
 
-// Serve scan results images
 app.get('/backend/results/:scanId/images/*', (req, res) => {
   const scanId = parseInt(req.params.scanId);
   const scan = scanResults.find(s => s.id === scanId);
