@@ -49,7 +49,7 @@ server {
 
     # Backend API proxy
     location /backend/ {
-        proxy_pass http://38.242.149.132/backend/;
+        proxy_pass http://localhost:3000/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -62,13 +62,29 @@ server {
         proxy_read_timeout 3600;
         proxy_connect_timeout 3600;
         proxy_send_timeout 3600;
+
+        # Allow POST requests
+        proxy_method POST;
+        proxy_set_header Content-Type application/json;
+        proxy_set_header Accept application/json;
     }
 
     # Enable CORS
-    add_header 'Access-Control-Allow-Origin' 'http://38.242.149.132' always;
+    add_header 'Access-Control-Allow-Origin' '*' always;
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+    add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
     add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+
+    # Handle OPTIONS requests for CORS
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+        add_header 'Access-Control-Max-Age' 1728000;
+        add_header 'Content-Type' 'text/plain; charset=utf-8';
+        add_header 'Content-Length' 0;
+        return 204;
+    }
 }
 ```
 
@@ -146,4 +162,3 @@ For API access issues:
 1. Check Nginx error logs for any routing problems
 2. Verify that all API calls use the correct URL format: http://38.242.149.132/backend/
 3. Ensure CORS headers are properly set in both Nginx and server.js
-```
