@@ -49,7 +49,7 @@ server {
 
     # Backend API proxy
     location /backend/ {
-        proxy_pass http://localhost:3000/backend/;
+        proxy_pass http://38.242.149.132/backend/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
