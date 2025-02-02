@@ -23,20 +23,25 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-[400px]">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">ReconFTW Platform</CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+      <Card className="w-[400px] shadow-xl">
+        <CardHeader className="space-y-4">
+          <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Recon Gan
+          </CardTitle>
+          <p className="text-center text-muted-foreground">
+            Sign in to access the platform
+          </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Input
                 type="text"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="bg-accent"
+                className="bg-accent/50 border-accent"
               />
             </div>
             <div className="space-y-2">
@@ -45,10 +50,10 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-accent"
+                className="bg-accent/50 border-accent"
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
               Login
             </Button>
           </form>

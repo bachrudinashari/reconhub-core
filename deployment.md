@@ -38,7 +38,7 @@ Add the following configuration:
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;  # Replace with your domain or IP
+    server_name 38.242.149.132;  # Your VPS IP
 
     location / {
         root /root/reconhub-core/dist;  # Path to your built frontend
@@ -46,7 +46,7 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location /api/ {
+    location /backend/ {
         proxy_pass http://localhost:3000/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;

@@ -17,7 +17,38 @@ app.use(express.static('dist'));
 const scanResults = [];
 let scanCounter = 0;
 
-app.post('/scan', (req, res) => {
+// Helper function to run command in background
+const runCommandInBackground = (command, scanId) => {
+  return new Promise((resolve, reject) => {
+    const process = exec(command, { detached: true }, (error, stdout, stderr) => {
+      const scanIndex = scanResults.findIndex(s => s.id === scanId);
+      if (scanIndex !== -1) {
+        scanResults[scanIndex].status = error ? 'failed' : 'completed';
+        
+        // Calculate folder size
+        try {
+          const size = getFolderSize(scanResults[scanIndex].outputDir);
+          scanResults[scanIndex].folderSize = formatBytes(size);
+        } catch (err) {
+          console.error('Error calculating folder size:', err);
+        }
+      }
+
+      if (error) {
+        console.error(`Error: ${error}`);
+        reject(error);
+      } else {
+        console.log(`Scan completed: ${stdout}`);
+        resolve(stdout);
+      }
+    });
+
+    // Unref the child process so it can run independently
+    process.unref();
+  });
+};
+
+app.post('/backend/scan', (req, res) => {
   const { target, scanType } = req.body;
   
   if (!target) {
@@ -44,38 +75,17 @@ app.post('/scan', (req, res) => {
     outputDir
   });
 
-  // Execute the command
-  exec(command, (error, stdout, stderr) => {
-    const scanIndex = scanResults.findIndex(s => s.id === scanId);
-    if (scanIndex !== -1) {
-      scanResults[scanIndex].status = error ? 'failed' : 'completed';
-      
-      // Calculate folder size
-      try {
-        const size = getFolderSize(outputDir);
-        scanResults[scanIndex].folderSize = formatBytes(size);
-      } catch (err) {
-        console.error('Error calculating folder size:', err);
-      }
-    }
+  // Run the command in background
+  runCommandInBackground(command, scanId)
+    .catch(error => console.error('Background scan error:', error));
 
-    if (error) {
-      console.error(`Error: ${error}`);
-      return res.status(500).json({ error: 'Failed to execute scan' });
-    }
-    
-    console.log(`stdout: ${stdout}`);
-    console.error(`stderr: ${stderr}`);
-    
-    res.json({ 
-      message: 'Scan started successfully',
-      output: stdout,
-      scanId 
-    });
+  res.json({ 
+    message: 'Scan started successfully',
+    scanId 
   });
 });
 
-app.get('/scans', (req, res) => {
+app.get('/backend/scans', (req, res) => {
   // Sort scans by timestamp in descending order (newest first)
   const sortedScans = [...scanResults].sort((a, b) => 
     new Date(b.timestamp) - new Date(a.timestamp)
@@ -84,7 +94,7 @@ app.get('/scans', (req, res) => {
 });
 
 // Serve scan results images
-app.get('/results/:scanId/images/*', (req, res) => {
+app.get('/backend/results/:scanId/images/*', (req, res) => {
   const scanId = parseInt(req.params.scanId);
   const scan = scanResults.find(s => s.id === scanId);
   
