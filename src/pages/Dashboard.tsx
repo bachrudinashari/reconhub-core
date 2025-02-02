@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const API_URL = "http://localhost:3000"; // Change this to your VPS IP/domain
+const API_URL = "http://38.242.149.132/backend"; // Change this to your VPS IP/domain
 
 const Dashboard = () => {
   const [target, setTarget] = useState("");
